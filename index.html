@@ -424,6 +424,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   .tab{font-size:11px;min-height:50px}
   .tab .ti{font-size:15px}
   .kv{grid-template-columns:78px 1fr}
+  .step-meta{display:none}
   table{min-width:0}
   th,td{white-space:normal;padding:8px 7px;font-size:12px}
 }
@@ -522,8 +523,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
       <div class="subhead">매물 유형 <span class="ln"></span></div>
       <div class="chips" id="typeChips" role="group" aria-label="매물 유형">
-        <button class="chip" type="button" data-type="oneroom" aria-pressed="true"><span class="dot"></span>원룸·오피스텔 <span class="sub">월세</span></button>
-        <button class="chip" type="button" data-type="apartment" aria-pressed="false"><span class="dot"></span>아파트·빌라 <span class="sub">매매·전세</span></button>
+        <button class="chip" type="button" data-type="oneroom" aria-pressed="false"><span class="dot"></span>원룸·오피스텔 <span class="sub">월세</span></button>
+        <button class="chip" type="button" data-type="apartment" aria-pressed="true"><span class="dot"></span>아파트·빌라 <span class="sub">매매·전세</span></button>
         <button class="chip" type="button" data-type="commercial" aria-pressed="false"><span class="dot"></span>상가·사무실 <span class="sub">임대</span></button>
       </div>
 
@@ -540,7 +541,14 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </div>
 
-      <div class="grid g3" id="priceFields">
+      <div class="subhead">거래 유형 <span class="ln"></span></div>
+      <div class="chips" id="dealChips" role="group" aria-label="거래 유형">
+        <button class="chip" type="button" data-deal="sale" aria-pressed="false"><span class="dot"></span>매매</button>
+        <button class="chip" type="button" data-deal="jeonse" aria-pressed="false"><span class="dot"></span>전세</button>
+        <button class="chip" type="button" data-deal="wolse" aria-pressed="false"><span class="dot"></span>월세</button>
+      </div>
+
+      <div class="grid g3" id="priceFields" style="margin-top:12px">
         <div class="field" id="saleWrap">
           <label for="fPrice">매매가 <span class="tip">만원 단위 숫자도 OK</span></label>
           <input type="text" id="fPrice" maxlength="24" placeholder="예: 8억 5,000">
@@ -578,7 +586,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <input type="text" id="fMove" maxlength="24" placeholder="예: 즉시 입주">
         </div>
       </div>
-      <p class="helper" style="margin:-4px 0 10px">매매는 매매가만, 월세·전세는 보증금·월세만 적으면 됩니다. 비운 항목은 영상에 나오지 않습니다.</p>
+      <p class="helper" style="margin:-4px 0 10px">거래 유형을 고르면 필요한 가격 칸만 남습니다. 비운 항목은 영상에 나오지 않습니다.</p>
       <div class="field">
         <label for="fPoint">한 줄 강점 <span class="tip">대본 마무리 멘트에 들어갑니다</span></label>
         <input type="text" id="fPoint" maxlength="60" placeholder="예: 올수리 완료, 채광 좋은 남향 끝집">
@@ -1108,7 +1116,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   /* =================== 2. 상태 =================== */
   var state = {
     photos: [],
-    type: 'oneroom',
+    type: 'apartment',
+    deal: 'sale',
     style: 'summary',
     tpl: 'full',
     intro: { on: true, title: '', accent: '#F0B429' },
@@ -1348,6 +1357,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       g.fillStyle = '#98A8B8'; g.fillRect(0, 720, 900, 4);
       g.fillStyle = '#DCE4EC'; g.fillRect(0, 748, 900, 452);
       g.fillStyle = '#CBD5E0'; g.fillRect(0, 770, 900, 3);
+      g.fillStyle = '#9FB0C2'; g.fillRect(0, 770, 900, 7);
+      g.fillStyle = 'rgba(120,134,150,.35)';
+      g.fillRect(0, 860, 900, 4); g.fillRect(0, 1000, 900, 4);
+      g.fillStyle = '#7C9A78'; g.beginPath(); g.arc(80, 900, 54, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#6B8A67'; g.beginPath(); g.arc(102, 862, 34, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#8A6B4F'; g.fillRect(76, 940, 10, 66);
+      g.fillStyle = '#7C9A78'; g.beginPath(); g.arc(820, 920, 46, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#8A6B4F'; g.fillRect(816, 952, 9, 56);
+
       g.fillStyle = 'rgba(60,74,92,.12)'; rr(g, 380, 588, 150, 130, 4); g.fill();
       g.fillStyle = '#F7FAFD'; rr(g, 330, 690, 240, 30, 15); g.fill();
       g.textAlign = 'left';
@@ -1467,8 +1485,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     return c.toDataURL('image/jpeg', 0.88);
   }
 
-  var SAMPLE_KINDS = ['exterior', 'living', 'kitchen', 'bath', 'bedroom', 'view'];
+  var SAMPLE_KINDS = ['exterior', 'living', 'kitchen', 'bedroom', 'bath', 'view'];
   async function loadSamples() {
+    state.type = 'apartment';
+    state.deal = 'sale';
+    $$('#typeChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-type') === 'apartment')); });
+    applyDeal();
     var type = TYPES[state.type];
     state.photos = [];
     for (var i = 0; i < SAMPLE_KINDS.length; i++) {
@@ -1480,8 +1502,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     state.fields.name = state.fields.name || '성산시영 21동 8층 남향';
     state.fields.addr = state.fields.addr || '마포구 성산동';
     state.fields.price = state.fields.price || '8억 5,000';
-    state.fields.deposit = state.fields.deposit || '1,000만';
-    state.fields.monthly = state.fields.monthly || '65만';
+    state.fields.deposit = '';
+    state.fields.monthly = '';
     state.fields.area = state.fields.area || '49.5';
     state.fields.floor = state.fields.floor || '8층 / 15층';
     state.fields.room = state.fields.room || '2룸 1욕';
@@ -1517,6 +1539,21 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     $('#introOn').checked = state.intro.on;
     $('#extraOn').checked = state.extras.on;
   }
+  function applyDeal(clearOthers) {
+    var d = state.deal;
+    $('#saleWrap').hidden = d !== 'sale';
+    $('#depWrap').hidden = d === 'sale';
+    $('#monWrap').hidden = d !== 'wolse';
+    $$('#dealChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-deal') === d)); });
+  }
+  $('#dealChips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-deal]');
+    if (!b) return;
+    state.deal = b.getAttribute('data-deal');
+    applyDeal();
+    scheduleAuto();
+  });
+
   var autoTimer = null;
   function scheduleAuto() {
     clearTimeout(autoTimer);
@@ -1569,6 +1606,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     if (!b) return;
     state.type = b.getAttribute('data-type');
     $$('#typeChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c === b)); });
+    state.deal = state.type === 'apartment' ? 'sale' : 'wolse';
+    applyDeal();
     state.scenesEdited = false;
     syncScenesToPhotos();
     autoFillScript();
@@ -1656,7 +1695,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   }
   function priceShort() {
     var f = state.fields, sale = wonFmt(f.price), dep = wonFmt(f.deposit), mon = wonFmt(f.monthly);
-    if (sale) return (TYPES[state.type].mode === 'sale' ? '매매 ' : '') + sale;
+    if (state.deal === 'sale') return sale ? '매매 ' + sale : '';
+    if (state.deal === 'jeonse') return dep ? '전세 ' + dep : '';
     if (dep && mon) return '보증금 ' + dep + ' / 월 ' + mon;
     if (dep) return '보증금 ' + dep;
     if (mon) return '월 ' + mon;
@@ -3336,6 +3376,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     seedExampleData(false);
     initDates();
     syncFieldInputs();
+    applyDeal();
     renderThumbs();
     renderSceneEditor();
     updateSummary();
