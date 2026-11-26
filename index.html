@@ -2677,10 +2677,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   /* 줄 수에 맞게 글자 크기를 줄여 주는 버전 (긴 제목 잘림·한 글자 떨어짐 방지) */
   function fitLines(text, maxW, size, weight, maxLines) {
     var s = size, lines = [];
-    for (var k = 0; k < 14; k++) {
+    for (var k = 0; k < 16; k++) {
       setFont(s, weight);
       lines = wrapText(text, maxW);
-      if (lines.length <= maxLines || s <= size * 0.6) break;
+      if (s <= size * 0.6) break;
+      /* 줄 수 초과뿐 아니라, 마지막 줄에 한두 글자만 남는 어색한 줄바꿈도 피한다 */
+      var orphan = lines.length > 1 && lines[lines.length - 1].replace(/\s/g, '').length <= 2;
+      if (lines.length <= maxLines && !orphan) break;
       s = Math.max(size * 0.6, Math.floor(s * 0.93));
     }
     if (lines.length > maxLines) {
