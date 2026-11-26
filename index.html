@@ -1207,7 +1207,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="subhead">🔑 API 키 설정 <span class="ln"></span></div>
         <p class="helper" style="margin-top:0">키는 이 기기에만 저장되고 서버로 보내지 않습니다. 비워 두면 예시 데이터로 동작합니다.</p>
         <div class="keyrow">
-          <div class="field" style="margin:0"><label for="kKakao">카카오 지도 JavaScript 키</label><input type="text" id="kKakao" placeholder="카카오디벨로퍼스 앱 키"></div>
+          <div class="field" style="margin:0"><label for="kKakao">카카오 지도 JavaScript 키</label><input type="text" id="kKakao" placeholder="비워 두면 기본 제공 키를 씁니다"></div>
           <span class="key-state" data-k="kakao"><span class="d"></span>없음</span>
         </div>
         <div class="keyrow">
@@ -4778,7 +4778,19 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     $$('.tab').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-view') === v)); });
     $$('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
     window.scrollTo(0, 0);
-    if (v === 'map') { renderMap(); renderDataTableFor(state.dataTab); updateMapKeyState(); }
+    if (v === 'map') {
+      renderMap();
+      renderDataTableFor(state.dataTab);
+      updateMapKeyState();
+      /* 탭이 화면에 붙은 다음 프레임에 지도 크기를 다시 잡는다(반쪽 렌더 방지) */
+      requestAnimationFrame(function () {
+        setTimeout(function () {
+          if (!$('#view-map') || !mapVisible()) return;
+          if (window.__kakaoMap) kakaoSync(kakaoFitCenter());
+          else if (OSM.mode === 'osm') osmRender();
+        }, 60);
+      });
+    }
     if (v === 'cal') { renderCalendar(); renderDayList(); renderSearch(); }
     if (v === 'set') { renderSettings(); }
   }
@@ -5067,10 +5079,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     var wrap = $('#mapCanvasWrap');
     if (!wrap) return;
     if (state.mapPin >= state.pins.length) state.mapPin = 0;
-    var keys = getKeys();
-    var kakaoReady = !!(keys.kakao && window.kakao && window.kakao.maps);
+    var kkey = kakaoKey();
+    var kakaoReady = !!(kkey && window.kakao && window.kakao.maps && window.kakao.maps.Map && mapVisible() && !window.__kakaoFailed && OSM.mode === 'osm');
     if (kakaoReady) {
-      if (!$('#kakaoMap')) initKakaoMap();
+      if (!window.__kakaoMap || !$('#kakaoMap')) initKakaoMap();
+      else if (window.__kakaoNeedSync) { window.__kakaoNeedSync = false; kakaoSync(kakaoFitCenter()); }
+    } else if (kkey && OSM.mode === 'osm' && !window.__kakaoFailed) {
+      /* 아직 SDK 로딩 전 — 로딩을 걸어 두고 그동안은 OSM을 보여 준다 */
+      loadKakaoMap(kkey);
+      osmRender();
     } else if (OSM.mode === 'svg') {
       OSM.el = null;
       wrap.innerHTML = mapSVG();
@@ -5132,6 +5149,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   window.addEventListener('resize', function () {
     clearTimeout(osmResizeT);
     osmResizeT = setTimeout(function () {
+      if (window.__kakaoMap && mapVisible()) { kakaoSync(null); return; }
       if (!$('#mapCanvasWrap') || OSM.mode === 'svg' || !OSM.el) return;
       if (!$('#mapCanvasWrap').offsetParent) return;
       osmRender();
@@ -5149,41 +5167,133 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     var badge = $('#mapKeyBadge');
     if (!badge) return;
     if (keys.kakao) {
-      badge.textContent = '카카오 키 저장됨 · 연결 시도';
+      badge.textContent = '카카오맵 연결';
       badge.className = 'badge green';
-      $('#mapCallout').innerHTML = '<b>카카오 지도 키가 저장되어 있습니다.</b> 카카오맵을 불러오는 중입니다. 연결되지 않으면 OpenStreetMap 실제 지도로 계속 동작합니다.' +
-        '<div class="btn-row" style="margin-top:8px"><button class="btn small gold" id="goKeys2" type="button">키 다시 넣기</button><span class="badge">OpenStreetMap 백업</span></div>';
+      $('#mapCallout').innerHTML = '<b>카카오맵이 기본 키로 바로 뜹니다.</b> 확대·축소·드래그·핀 클릭 모두 됩니다. ' +
+        '내 키를 넣으면 그 키를 먼저 쓰고, 연결이 안 되면 OpenStreetMap → 내장 약도 순으로 자동 대체합니다.' +
+        '<div class="btn-row" style="margin-top:8px"><button class="btn small gold" id="goKeys2" type="button">내 키 넣기</button><span class="badge">OpenStreetMap · 약도 백업</span></div>';
       var b2 = $('#goKeys2');
       if (b2) b2.addEventListener('click', function () { switchView('set'); });
-      loadKakaoMap(keys.kakao);
+      loadKakaoMap(kakaoKey());
+    } else {
+      badge.textContent = 'OpenStreetMap · 키 불필요';
+      badge.className = 'badge green';
+      $('#mapCallout').innerHTML = '<b>지도가 바로 뜹니다.</b> 기본 제공 카카오 키를 연결하는 중이고, 연결되지 않으면 ' +
+        '<b>OpenStreetMap 실제 지도</b>로 계속 동작합니다(키·가입 불필요).' +
+        '<div class="btn-row" style="margin-top:8px"><button class="btn small gold" id="goKeys" type="button">내 카카오 키 넣기</button>' +
+        '<span class="badge green" id="mapKeyBadge2">자동 대체 준비됨</span></div>';
     }
   }
+  /* 기본 제공 카카오 JavaScript 키 (econature7-lab.github.io 도메인 제한 공개용).
+     사용자가 자기 키를 넣으면 그 키를 먼저 쓴다. 실패·오프라인이면 OpenStreetMap → 내장 약도 순으로 대체. */
+  var KAKAO_JS_KEY = '2b660dbc0078832e0cfc86de5c5386aa';
+  function kakaoKey() {
+    var k = '';
+    try { k = (getKeys().kakao || '').trim(); } catch (e) { k = ''; }
+    return k || KAKAO_JS_KEY;
+  }
+  function mapVisible() {
+    var v = $('#view-map');
+    if (!v) return false;
+    return v.offsetParent !== null && v.clientWidth > 20;
+  }
   function loadKakaoMap(key) {
-    if (window.kakao && window.kakao.maps) { initKakaoMap(); return; }
-    if (window.__kakaoLoading || window.__kakaoFailed) return;
+    key = key || kakaoKey();
+    if (!key) return;
+    if (window.kakao && window.kakao.maps && window.kakao.maps.Map) { initKakaoMap(); return; }
+    if (window.__kakaoLoading) return;
+    if (window.__kakaoFailed) { fallbackToOsm(); return; }
     window.__kakaoLoading = true;
     var s = document.createElement('script');
     s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + encodeURIComponent(key) + '&autoload=false';
-    s.onload = function () { window.__kakaoLoading = false; try { window.kakao.maps.load(initKakaoMap); } catch (e) { toast('카카오 지도 초기화에 실패했습니다. 내장 약도를 씁니다.', true); } };
-    s.onerror = function () { window.__kakaoLoading = false; window.__kakaoFailed = true; toast('카카오 지도를 불러오지 못했습니다. 내장 약도를 씁니다.', true); };
+    s.onload = function () {
+      window.__kakaoLoading = false;
+      try {
+        window.kakao.maps.load(function () {
+          if (mapVisible()) initKakaoMap();
+          else window.__kakaoNeedSync = true;
+        });
+      } catch (e) {
+        window.__kakaoFailed = true;
+        fallbackToOsm();
+      }
+    };
+    s.onerror = function () { window.__kakaoLoading = false; window.__kakaoFailed = true; fallbackToOsm(); };
     document.head.appendChild(s);
+  }
+  function fallbackToOsm() {
+    OSM.mode = 'osm';
+    window.__kakaoMap = null;
+    try { renderMap(); } catch (e) { }
+  }
+  /* 5개 핀 마커 다시 붙이기 (숨은 탭에서 만들면 마커가 사라지는 문제 대비) */
+  function kakaoMarkers() {
+    var m = window.__kakaoMap;
+    if (!m || !window.kakao || !window.kakao.maps) return;
+    (window.__kakaoMarkers || []).forEach(function (mk) { try { mk.setMap(null); } catch (e) { } });
+    window.__kakaoMarkers = state.pins.map(function (p, i) {
+      var q = pinLL(p);
+      var mk = new window.kakao.maps.Marker({ map: m, position: new window.kakao.maps.LatLng(q.lat, q.lng) });
+      window.kakao.maps.event.addListener(mk, 'click', function () { selectPin(i); });
+      return mk;
+    });
+  }
+  /* 반쪽 렌더 고침: relayout + 중심 재설정 + 마커 재적용을 두 번(즉시·250ms) */
+  function kakaoSync(center) {
+    var m = window.__kakaoMap;
+    if (!m || !window.kakao || !window.kakao.maps) return false;
+    function once() {
+      try {
+        m.relayout();
+        if (center) m.setCenter(center);
+        kakaoMarkers();
+      } catch (e) { }
+    }
+    once();
+    setTimeout(once, 250);
+    return true;
+  }
+  function kakaoFitCenter() {
+    var pts = state.pins.map(pinLL);
+    if (!pts.length) return new window.kakao.maps.LatLng(37.533, 127.012);
+    var la = pts.map(function (q) { return q.lat; }), lo = pts.map(function (q) { return q.lng; });
+    var lat = (Math.min.apply(null, la) + Math.max.apply(null, la)) / 2;
+    var lng = (Math.min.apply(null, lo) + Math.max.apply(null, lo)) / 2;
+    return new window.kakao.maps.LatLng(lat, lng);
   }
   function initKakaoMap() {
     try {
       var wrap = $('#mapCanvasWrap');
       if (!wrap) return;
-      wrap.innerHTML = '<div id="kakaoMap" style="width:100%;height:320px"></div>';
-      var map = new window.kakao.maps.Map($('#kakaoMap'), { center: new window.kakao.maps.LatLng(37.5665, 126.9019), level: 6 });
-      state.pins.forEach(function (p) {
-        var q = pinLL(p);
-        var mk = new window.kakao.maps.Marker({ map: map, position: new window.kakao.maps.LatLng(q.lat, q.lng) });
-        window.kakao.maps.event.addListener(mk, 'click', function () { selectPin(state.pins.indexOf(p)); });
-      });
-      $('#mapNote').textContent = '카카오 지도 · 실제 지도';
-      $('#mapNote').classList.remove('gold');
-    } catch (e) { toast('카카오 지도 표시에 실패했습니다.', true); }
+      if (!mapVisible()) { window.__kakaoNeedSync = true; return; }
+      if (!window.__kakaoMap || !$('#kakaoMap')) {
+        OSM.el = null;
+        wrap.innerHTML = '<div id="kakaoMap" style="width:100%;height:340px"></div>';
+        var center = kakaoFitCenter();
+        window.__kakaoCenter = center;
+        window.__kakaoMap = new window.kakao.maps.Map($('#kakaoMap'), { center: center, level: 7 });
+        kakaoMarkers();
+        kakaoSync(center);
+        /* 타일이 실제로 그려졌는지 확인 — 도메인 불일치·차단이면 OSM으로 자동 대체 */
+        setTimeout(function () {
+          var el = $('#kakaoMap');
+          if (!el) return;
+          if (!el.querySelector('img') && !el.querySelector('canvas')) {
+            window.__kakaoFailed = true;
+            fallbackToOsm();
+            toast('카카오 지도를 표시하지 못해 OpenStreetMap으로 보여 드립니다.', true);
+          }
+        }, 2600);
+      } else {
+        kakaoSync(kakaoFitCenter());
+      }
+      var note = $('#mapNote');
+      if (note) { note.textContent = '카카오맵 · 실제 지도'; note.classList.remove('gold'); }
+    } catch (e) {
+      window.__kakaoFailed = true;
+      fallbackToOsm();
+    }
   }
-
   /* =================== 15. 공공데이터 =================== */
   var DATA = {
     trade: {
@@ -5708,7 +5818,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         st.innerHTML = '<span class="d"></span>' + (on ? '저장됨' : '없음');
       }
     });
-    $('#keyNote').textContent = keys.kakao ? '카카오 지도 키가 저장되어 있습니다. [지도·공공데이터]에서 실제 지도로 열립니다.' : '지도는 카카오 키가 있으면 실제 지도로 바뀝니다(인터넷 필요).';
+    $('#keyNote').textContent = keys.kakao ? '내 카카오 지도 키가 저장되어 있습니다. [지도·공공데이터]에서 이 키를 먼저 씁니다.' : '지도는 기본 제공 카카오 키로 바로 뜹니다. 내 키를 넣으면 내 키를 먼저 씁니다(인터넷 필요).';
     var seeded = lsGet(LS.seed, false);
     $('#seedBadge').textContent = seeded ? '예시 데이터 1회 삽입 완료' : '예시 데이터 아직 없음';
     $('#seedBadge').className = 'badge ' + (seeded ? 'green' : 'gold');
