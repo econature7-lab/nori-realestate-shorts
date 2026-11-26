@@ -5239,6 +5239,20 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     });
   }
   /* 반쪽 렌더 고침: relayout + 중심 재설정 + 마커 재적용을 두 번(즉시·250ms) */
+  function kakaoBounds() {
+    var bd = new window.kakao.maps.LatLngBounds();
+    state.pins.forEach(function (p) {
+      var q = pinLL(p);
+      bd.extend(new window.kakao.maps.LatLng(q.lat, q.lng));
+    });
+    return bd;
+  }
+  /* 5개 핀이 한 화면에 모두 들어오게 (level 7 고정이면 강변·홍대가 화면 밖으로 나간다) */
+  function kakaoFit() {
+    var m = window.__kakaoMap;
+    if (!m || !window.kakao || !window.kakao.maps) return;
+    try { m.relayout(); m.setBounds(kakaoBounds()); } catch (e) { }
+  }
   function kakaoSync(center) {
     var m = window.__kakaoMap;
     if (!m || !window.kakao || !window.kakao.maps) return false;
@@ -5271,9 +5285,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         wrap.innerHTML = '<div id="kakaoMap" style="width:100%;height:340px"></div>';
         var center = kakaoFitCenter();
         window.__kakaoCenter = center;
-        window.__kakaoMap = new window.kakao.maps.Map($('#kakaoMap'), { center: center, level: 7 });
+        window.__kakaoMap = new window.kakao.maps.Map($('#kakaoMap'), { center: center, level: 8 });
         kakaoMarkers();
         kakaoSync(center);
+        setTimeout(kakaoFit, 120);
+        setTimeout(kakaoFit, 420);
         /* 타일이 실제로 그려졌는지 확인 — 도메인 불일치·차단이면 OSM으로 자동 대체 */
         setTimeout(function () {
           var el = $('#kakaoMap');
