@@ -3295,16 +3295,35 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     reels: tplReels, split: tplSplit, commercial: tplCommercial, terracotta: tplTerracotta
   };
 
+  /* 인트로용 메인 사진 — 색 보정본을 한 번만 만들어 캐시 (매 프레임 filter 비용 없음) */
+  var INTRO_IMG = { src: null, canvas: null };
+  function introMainImage() {
+    var img = imgOf(0);
+    if (!img) return null;
+    if (INTRO_IMG.src === img && INTRO_IMG.canvas) return INTRO_IMG.canvas;
+    try {
+      var c = document.createElement('canvas');
+      c.width = img.naturalWidth || img.width;
+      c.height = img.naturalHeight || img.height;
+      var g = c.getContext('2d');
+      g.filter = 'saturate(1.15) contrast(1.05) brightness(1.04)';
+      g.drawImage(img, 0, 0);
+      /* drawPhotoMotion이 naturalWidth를 보므로 캔버스에도 크기를 알려 준다 */
+      try { c.naturalWidth = c.width; c.naturalHeight = c.height; } catch (e) { }
+      INTRO_IMG = { src: img, canvas: c };
+      return c;
+    } catch (e) {
+      return img;
+    }
+  }
+
   function drawIntro(t) {
     var accent = state.intro.accent || '#F0B429';
     var iD = introDur();
     /* 1) 1번 메인 사진을 풀블리드로 크게 — 천천히 밀어 넣는 카메라 */
-    var mainImg = imgOf(0);
+    var mainImg = introMainImage();
     if (mainImg) {
-      ctx.save();
-      try { ctx.filter = 'saturate(1.15) contrast(1.05) brightness(1.04)'; } catch (e) { }
       drawPhotoMotion(mainImg, clamp(t / Math.max(0.8, iD), 0, 1), 'kenburns', { x: 0, y: 0, w: W, h: H });
-      ctx.restore();
     } else {
       var g0 = ctx.createLinearGradient(0, 0, W, H);
       g0.addColorStop(0, '#0F1E36'); g0.addColorStop(1, '#0A1424');
