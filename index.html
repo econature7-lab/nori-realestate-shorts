@@ -4041,17 +4041,31 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     }
     if (st >= 0) runs.push([st, frames]);
     var edges = [0];
+    var cands = runs.map(function (rr2) {
+      return { t: ((rr2[0] + rr2[1]) / 2) * 0.02, len: (rr2[1] - rr2[0]) * 0.02 };
+    }).filter(function (c) { return c.len >= 0.10 && c.t > total * 0.05 && c.t < total * 0.99; });
+    /* 장면 경계마다 '가장 긴 쉼(문장 경계일 확률이 높음)'을 우선 고른다 */
     for (var k = 1; k < n; k++) {
-      var want = total * k / n, bestT = null, bestD = 1e9;
-      runs.forEach(function (rr2) {
-        if ((rr2[1] - rr2[0]) * 0.02 < 0.09) return;
-        var tt = ((rr2[0] + rr2[1]) / 2) * 0.02;
-        if (tt < total * 0.05 || tt > total * 0.99) return;
-        if (edges.some(function (e) { return Math.abs(e - tt) < 0.14; })) return;
-        var d = Math.abs(tt - want);
-        if (d < bestD) { bestD = d; bestT = tt; }
+      var want = total * k / n, win = total / (2 * n);
+      var inWin = cands.filter(function (c) {
+        if (Math.abs(c.t - want) > win) return false;
+        return !edges.some(function (e) { return Math.abs(e - c.t) < 0.20; });
       });
-      edges.push(bestT == null ? want : bestT);
+      var pickT = null;
+      if (inWin.length) {
+        var best = inWin[0];
+        inWin.forEach(function (c) { if (c.len > best.len + 0.02) best = c; });
+        pickT = best.t;
+      } else {
+        var bestD = 1e9, bestT = null;
+        cands.forEach(function (c) {
+          if (edges.some(function (e) { return Math.abs(e - c.t) < 0.20; })) return;
+          var d = Math.abs(c.t - want);
+          if (d < bestD) { bestD = d; bestT = c.t; }
+        });
+        pickT = bestT == null ? want : bestT;
+      }
+      edges.push(pickT);
     }
     edges.push(total);
     edges.sort(function (a, b) { return a - b; });
@@ -4071,13 +4085,24 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     }
     return out;
   }
+  function equalSplit(buf, n) {
+    var c = aCtx(), sr = buf.sampleRate, d = buf.getChannelData(0), out = [];
+    for (var k = 0; k < n; k++) {
+      var s0 = Math.floor(d.length * k / n), s1 = Math.floor(d.length * (k + 1) / n);
+      var b = c.createBuffer(1, Math.max(1, s1 - s0), sr), dst = b.getChannelData(0);
+      for (var i = 0; i < dst.length; i++) dst[i] = d[s0 + i] || 0;
+      out.push(b);
+    }
+    return out;
+  }
   function ttsWholeGenerate(provider, key, voice, btn) {
     var list = ttsSceneTexts();
     var joined = list.map(function (o) { return o.t; }).join('\n\n');
     btn.textContent = '🎧 전체 대본으로 음성 만드는 중…';
     $('#ttsNote').textContent = list.length + '장면 대본을 한 번에 읽는 음성을 만드는 중… (호출 1회)';
     return ttsOne(joined, provider, key, voice).then(function (buf) {
-      var parts = splitBufferBySilence(buf, list.length);
+      var parts;
+      try { parts = splitBufferBySilence(buf, list.length); } catch (e) { parts = equalSplit(buf, list.length); }
       var bufs = new Array(state.scenes.length).fill(null);
       list.forEach(function (o, k) { bufs[o.i] = parts[k]; });
       var valid = bufs.filter(Boolean).length;
