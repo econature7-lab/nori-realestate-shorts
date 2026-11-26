@@ -2659,10 +2659,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     /* 상단 대형 2줄 타이틀: 1줄 노랑 / 2줄 흰색 (단어 단위로 나눠 한 글자 떨어짐 방지) */
     var hw = String(scene.headline || '').split(/\s+/).filter(Boolean);
     var l1 = scene.headline || '', l2 = '';
-    if (hw.length > 1) {
+    if (hw.length >= 4) {
       var cutAt = Math.ceil(hw.length / 2);
       l1 = hw.slice(0, cutAt).join(' ');
       l2 = hw.slice(cutAt).join(' ');
+      if (l2.length <= 2) l2 = '';   /* 한 단어만 남는 어색한 2줄 방지 */
     }
     var hSize = 84;
     for (var hk = 0; hk < 14; hk++) {
