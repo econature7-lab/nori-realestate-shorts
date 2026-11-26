@@ -4394,6 +4394,22 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         tts: { provider: state.audio.tts.provider, voice: state.audio.tts.voice, rate: state.audio.tts.rate }
       };
     },
+    /* 녹화본과 마스터 오디오를 대조하기 위한 RMS 엔벨로프 (점검용) */
+    env: function (step) {
+      if (!AE.buffer) return null;
+      var st = Math.max(0.01, step || 0.05), sr = AE.buffer.sampleRate;
+      var d0 = AE.buffer.getChannelData(0);
+      var d1 = AE.buffer.numberOfChannels > 1 ? AE.buffer.getChannelData(1) : d0;
+      var n = Math.floor(d0.length / (sr * st));
+      var out = new Array(n);
+      for (var k = 0; k < n; k++) {
+        var s0 = Math.floor(k * st * sr), s1 = Math.min(d0.length, Math.floor((k + 1) * st * sr));
+        var sum = 0;
+        for (var i = s0; i < s1; i++) { var v = (d0[i] + d1[i]) / 2; sum += v * v; }
+        out[k] = Math.round(Math.sqrt(sum / Math.max(1, s1 - s0)) * 100000) / 100000;
+      }
+      return { step: st, sr: sr, narr: NAR.mode, clips: NAR.clips.map(function (c) { return { i: c.index, dur: Math.round(c.buffer.duration * 100) / 100 }; }), rms: out };
+    },
     setDurations: function (list) {
       (list || []).forEach(function (d, i) { if (state.scenes[i]) state.scenes[i].dur = clamp(Number(d) || 2, 1.5, 5); });
       drawFrame(state.t); updateSummary();
