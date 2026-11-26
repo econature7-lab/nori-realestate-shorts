@@ -2243,7 +2243,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       } else if (i === 1) {
         sc.headline = price || py || '조건 확인';
         sc.sub = [py ? '전용 ' + py : '', station, move].filter(Boolean).join(' · ');
-        sc.script = (price || '가격 문의') + '.' + (station ? ' ' + shortStation(station) + '.' : '') + (py ? ' 전용 ' + py + '.' : '');
+        sc.script = (price || '가격 문의') + (py ? ' ' + py : '') + '.';
       } else if (last) {
         var cv = pickVariant(HOOK_CTA, hookSeq() + hashStr(name + price));
         sc.headline = cv.h;
@@ -4021,7 +4021,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     return list;
   }
   /* 한 번에 읽은 음성을 무음 구간 기준으로 n토막으로 자른다 */
-  function splitBufferBySilence(buf, n) {
+  function splitBufferBySilence(buf, n, weights) {
     var c = aCtx();
     var sr = buf.sampleRate, ch0 = buf.getChannelData(0), L = ch0.length;
     var total = L / sr;
@@ -4041,12 +4041,21 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     }
     if (st >= 0) runs.push([st, frames]);
     var edges = [0];
+    var wsum = 0, useW = !!(weights && weights.length === n);
+    if (useW) weights.forEach(function (w) { wsum += Math.max(1, w); });
+    var cumW = function (k) {
+      var a = 0;
+      for (var q = 0; q < k; q++) a += Math.max(1, weights[q]);
+      return a / wsum;
+    };
     var cands = runs.map(function (rr2) {
       return { t: ((rr2[0] + rr2[1]) / 2) * 0.02, len: (rr2[1] - rr2[0]) * 0.02 };
     }).filter(function (c) { return c.len >= 0.10 && c.t > total * 0.05 && c.t < total * 0.99; });
     /* 장면 경계마다 '가장 긴 쉼(문장 경계일 확률이 높음)'을 우선 고른다 */
     for (var k = 1; k < n; k++) {
-      var want = total * k / n, win = total / (2 * n);
+      var want = total * (useW ? cumW(k) : k / n);
+      var win = useW ? total * (Math.max(1, weights[Math.min(n - 1, k)]) / wsum) * 0.50 : total / (2 * n);
+      if (win < 0.25) win = 0.25;
       var inWin = cands.filter(function (c) {
         if (Math.abs(c.t - want) > win) return false;
         return !edges.some(function (e) { return Math.abs(e - c.t) < 0.20; });
@@ -4102,7 +4111,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     $('#ttsNote').textContent = list.length + '장면 대본을 한 번에 읽는 음성을 만드는 중… (호출 1회)';
     return ttsOne(joined, provider, key, voice).then(function (buf) {
       var parts;
-      try { parts = splitBufferBySilence(buf, list.length); } catch (e) { parts = equalSplit(buf, list.length); }
+      var wts = list.map(function (o) { return String(o.t).replace(/\s/g, '').length; });
+      try { parts = splitBufferBySilence(buf, list.length, wts); } catch (e) { parts = equalSplit(buf, list.length); }
       var bufs = new Array(state.scenes.length).fill(null);
       list.forEach(function (o, k) { bufs[o.i] = parts[k]; });
       var valid = bufs.filter(Boolean).length;
