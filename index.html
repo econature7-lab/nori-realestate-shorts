@@ -608,11 +608,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="grid g2">
         <div class="field">
           <label for="fName">매물명 <span class="tip">쇼츠 첫 화면 제목</span></label>
-          <input type="text" id="fName" maxlength="46" placeholder="예: 성산시영 21동 8층 남향">
+          <input type="text" id="fName" maxlength="46" placeholder="예: 강변역 테크노마트 5층 사무실 / 홍대입구 1층 상가">
         </div>
         <div class="field">
           <label for="fAddr">주소·동네</label>
-          <input type="text" id="fAddr" maxlength="46" placeholder="예: 마포구 성산동">
+          <input type="text" id="fAddr" maxlength="46" placeholder="예: 광진구 구의동 · 마포구 서교동">
         </div>
       </div>
 
@@ -626,45 +626,45 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="grid g3" id="priceFields" style="margin-top:12px">
         <div class="field" id="saleWrap">
           <label for="fPrice">매매가 <span class="tip">만원 단위 숫자도 OK</span></label>
-          <input type="text" id="fPrice" maxlength="24" placeholder="예: 8억 5,000">
+          <input type="text" id="fPrice" maxlength="24" placeholder="예: 8억 5,000 / 전세 6억 3,000">
         </div>
         <div class="field" id="depWrap">
           <label for="fDeposit">보증금</label>
-          <input type="text" id="fDeposit" maxlength="24" placeholder="예: 1,000만">
+          <input type="text" id="fDeposit" maxlength="24" placeholder="예: 2,000만">
         </div>
         <div class="field" id="monWrap">
           <label for="fMonthly">월세</label>
-          <input type="text" id="fMonthly" maxlength="24" placeholder="예: 65만">
+          <input type="text" id="fMonthly" maxlength="24" placeholder="예: 140만">
         </div>
         <div class="field">
           <label for="fArea">전용면적 <span class="tip">㎡</span></label>
-          <input type="text" id="fArea" inputmode="decimal" maxlength="10" placeholder="예: 49.5">
+          <input type="text" id="fArea" inputmode="decimal" maxlength="10" placeholder="예: 46.2">
         </div>
         <div class="field">
           <label for="fFloor">해당 층</label>
-          <input type="text" id="fFloor" maxlength="18" placeholder="예: 8층 / 15층">
+          <input type="text" id="fFloor" maxlength="18" placeholder="예: 5층 / 9층">
         </div>
         <div class="field">
           <label for="fRoom">방·욕실</label>
-          <input type="text" id="fRoom" maxlength="18" placeholder="예: 2룸 1욕">
+          <input type="text" id="fRoom" maxlength="18" placeholder="예: 오피스 1실 / 2룸 1욕">
         </div>
         <div class="field">
           <label for="fStation">가까운 역</label>
-          <input type="text" id="fStation" maxlength="30" placeholder="예: 6호선 증산역 도보 5분">
+          <input type="text" id="fStation" maxlength="30" placeholder="예: 2호선 강변역 도보 1분">
         </div>
         <div class="field">
           <label for="fPark">주차</label>
-          <input type="text" id="fPark" maxlength="24" placeholder="예: 세대당 1대">
+          <input type="text" id="fPark" maxlength="24" placeholder="예: 건물 주차 3대">
         </div>
         <div class="field">
           <label for="fMove">입주 가능일</label>
-          <input type="text" id="fMove" maxlength="24" placeholder="예: 즉시 입주">
+          <input type="text" id="fMove" maxlength="24" placeholder="예: 즉시 입주 / 협의 후 입주">
         </div>
       </div>
       <p class="helper" style="margin:-4px 0 10px">거래 유형을 고르면 필요한 가격 칸만 남습니다. 비운 항목은 영상에 나오지 않습니다.</p>
       <div class="field">
         <label for="fPoint">한 줄 강점 <span class="tip">대본 마무리 멘트에 들어갑니다</span></label>
-        <input type="text" id="fPoint" maxlength="60" placeholder="예: 올수리 완료, 채광 좋은 남향 끝집">
+        <input type="text" id="fPoint" maxlength="60" placeholder="예: 대로변 역세권, 채광 좋은 사무실">
       </div>
 
       <div class="divider"></div>
@@ -1487,9 +1487,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   }
 
   var SAMPLE_ITEMS = [
-    { off: 0, time: '10:00', title: '성산동 원룸 임장', type: '임장', memo: '3시 고객 동행 · 열쇠 수령', state: '예정' },
-    { off: 0, time: '14:30', title: '망원동 오피스텔 상담', type: '상담', memo: '보증금 조정 문의', state: '예정' },
-    { off: 0, time: '18:00', title: '쇼츠 촬영 · 성산시영', type: '촬영', memo: '사진 8장 · 남향 거실 중심', state: '예정' },
+    { off: 0, time: '10:00', title: '강변역 테크노마트 사무실 임장', type: '임장', memo: '보증금 2,000 / 월 140 · 5층', state: '예정' },
+    { off: 0, time: '14:30', title: '홍대입구 1층 상가 상담', type: '상담', memo: '보증금 5,000 / 월 350 · 권리금 확인', state: '예정' },
+    { off: 0, time: '18:00', title: '쇼츠 촬영 · 성산시영', type: '촬영', memo: '사진 5장 · 남향 거실 중심', state: '예정' },
     { off: 1, time: '09:30', title: '서교동 사무실 계약 검토', type: '계약', memo: '특약 3항 확인', state: '예정' },
     { off: 2, time: '11:00', title: '합정역 상가 임장', type: '임장', memo: '유동인구 오전/저녁 비교', state: '예정' },
     { off: 5, time: '15:00', title: '푸른미래 강사 미팅', type: '상담', memo: '12월 프로그램 일정', state: '예정' },
@@ -1498,10 +1498,10 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   ];
   var SAMPLE_PINS = [
     { name: '성산시영 21동 8층 남향', type: '아파트·빌라', price: '매매 8억 5,000', area: '전용 24평', station: '6호선 증산역 도보 6분', agency: '노리공인중개사', x: 176, y: 208, note: '실거래 8억 3,000 · 상권 활발' },
-    { name: '망원동 신축 원룸 302호', type: '원룸·오피스텔', price: '보증금 1,000 / 월 65', area: '전용 7평', station: '6호선 망원역 도보 4분', agency: '노리공인중개사', x: 320, y: 118, note: '유동인구 일 1.2만 · 카페 42곳' },
-    { name: '서교동 사무실 2층', type: '상가·사무실', price: '보증금 2,000 / 월 120', area: '전용 18평', station: '2호선 홍대입구 도보 7분', agency: '노리공인중개사', x: 438, y: 300, note: '배후 사무실 밀집 · 주차 1대' },
-    { name: '합정역 오피스텔 15층', type: '원룸·오피스텔', price: '보증금 2,000 / 월 85', area: '전용 9평', station: '2·6호선 합정역 도보 3분', agency: '노리공인중개사', x: 512, y: 352, note: '역세권 · 즉시 입주' },
-    { name: '상암동 근린상가 1층', type: '상가·사무실', price: '보증금 3,000 / 월 180', area: '전용 22평', station: '6호선 월드컵경기장 도보 8분', agency: '노리공인중개사', x: 112, y: 96, note: '대로변 노출 · 유동인구 풍부' }
+    { name: '강변역 테크노마트 5층 사무실', type: '상가·사무실', price: '보증금 2,000 / 월 140', area: '전용 14평', station: '2호선 강변역 도보 1분', agency: '노리공인중개사', x: 320, y: 118, note: '대로변 역세권 · 채광 좋은 사무실' },
+    { name: '홍대입구 1층 상가', type: '상가·사무실', price: '보증금 5,000 / 월 350', area: '전용 8평', station: '2호선 홍대입구 도보 3분', agency: '노리공인중개사', x: 438, y: 300, note: '유동인구 많음 · 1층 노출' },
+    { name: '자양동 한강뷰 아파트 12층', type: '아파트·빌라', price: '전세 6억 3,000', area: '전용 18평', station: '7호선 뚝섬유원지 도보 5분', agency: '노리공인중개사', x: 512, y: 352, note: '한강뷰 · 올수리 완료' },
+    { name: '합정역 오피스텔 15층', type: '원룸·오피스텔', price: '보증금 2,000 / 월 85', area: '전용 9평', station: '2·6호선 합정역 도보 3분', agency: '노리공인중개사', x: 112, y: 96, note: '역세권 · 즉시 입주' }
   ];
 
   function seedExampleData(force) {
@@ -1889,10 +1889,37 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   }
 
   var SAMPLE_KINDS = ['exterior', 'living', 'kitchen', 'bedroom', 'bath', 'view'];
+  /* 샘플 체험 프리셋 — 누를 때마다 다른 동네·다른 업종 예시로 순환 (마포 밖 포함) */
+  var SAMPLE_PRESETS = [
+    { title: '성산시영 아파트(마포)', type: 'apartment', deal: 'sale',
+      fields: { name: '성산시영 21동 8층 남향', addr: '마포구 성산동', price: '8억 5,000', deposit: '', monthly: '',
+        area: '49.5', floor: '8층 / 15층', room: '2룸 1욕', station: '6호선 증산역 도보 6분', park: '세대당 1대',
+        move: '즉시 입주', point: '올수리 완료, 채광 좋은 남향 끝집' } },
+    { title: '강변역 테크노마트 사무실(광진)', type: 'commercial', deal: 'wolse',
+      fields: { name: '강변역 테크노마트 5층 사무실', addr: '광진구 구의동', price: '', deposit: '2,000', monthly: '140',
+        area: '46.2', floor: '5층 / 9층', room: '오피스 1실', station: '2호선 강변역 도보 1분', park: '건물 주차 3대',
+        move: '즉시 입주', point: '대로변 역세권, 채광 좋은 사무실' } },
+    { title: '홍대입구 1층 상가(마포)', type: 'commercial', deal: 'wolse',
+      fields: { name: '홍대입구 1층 상가', addr: '마포구 서교동', price: '', deposit: '5,000', monthly: '350',
+        area: '26.4', floor: '1층 / 5층', room: '상가 1층', station: '2호선 홍대입구역 도보 3분', park: '건물 내 주차',
+        move: '협의 후 입주', point: '유동인구 많은 대로변 1층 상가' } },
+    { title: '자양동 한강뷰 아파트(광진)', type: 'apartment', deal: 'jeonse',
+      fields: { name: '자양동 한강뷰 아파트', addr: '광진구 자양동', price: '', deposit: '6억 3,000', monthly: '',
+        area: '59.8', floor: '12층 / 20층', room: '3룸 2욕', station: '7호선 뚝섬유원지역 도보 5분', park: '세대당 1대',
+        move: '입주 협의', point: '한강뷰, 올수리 완료' } }
+  ];
+  function samplePreset() {
+    var idx = 0;
+    try { idx = Number(localStorage.getItem('nori_shorts_sample_idx_v3') || 0) || 0; } catch (e) { }
+    var p = SAMPLE_PRESETS[idx % SAMPLE_PRESETS.length];
+    try { localStorage.setItem('nori_shorts_sample_idx_v3', String(idx + 1)); } catch (e) { }
+    return p;
+  }
   async function loadSamples() {
-    state.type = 'apartment';
-    state.deal = 'sale';
-    $$('#typeChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-type') === 'apartment')); });
+    var preset = samplePreset();
+    state.type = preset.type;
+    state.deal = preset.deal;
+    $$('#typeChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.getAttribute('data-type') === state.type)); });
     applyDeal();
     var type = TYPES[state.type];
     state.photos = [];
@@ -1902,21 +1929,10 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       state.photos.push({ id: nextId(), name: type.titles[i] || ('장면 ' + (i + 1)), url: url, img: img, sample: true });
     }
     state.scenesEdited = false;
-    state.fields.name = state.fields.name || '성산시영 21동 8층 남향';
-    state.fields.addr = state.fields.addr || '마포구 성산동';
-    state.fields.price = state.fields.price || '8억 5,000';
-    state.fields.deposit = '';
-    state.fields.monthly = '';
-    state.fields.area = state.fields.area || '49.5';
-    state.fields.floor = state.fields.floor || '8층 / 15층';
-    state.fields.room = state.fields.room || '2룸 1욕';
-    state.fields.station = state.fields.station || '6호선 증산역 도보 6분';
-    state.fields.park = state.fields.park || '세대당 1대';
-    state.fields.move = state.fields.move || '즉시 입주';
-    state.fields.point = state.fields.point || '올수리 완료, 채광 좋은 남향 끝집';
+    Object.keys(preset.fields).forEach(function (k) { state.fields[k] = preset.fields[k]; });
     syncFieldInputs();
     afterPhotosChanged(true);
-    toast('샘플 6장을 넣었습니다. 대본도 자동으로 채웠어요.');
+    toast('샘플 6장 · ' + preset.title + ' 예시를 넣었습니다. 다시 누르면 다른 매물로 바뀝니다.');
     var step3 = $('#step3Card');
     if (step3 && window.innerWidth < 881) step3.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -3411,7 +3427,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     try { drawSceneBody(idx, local, dur); } catch (e) { }
     ctx = prev;
   }
-  var TRANS_DUR = 0.40;
+  var TRANS_DUR = 0.34;
   function transitionKind(idx) {
     var k = state.transition || 'mix';
     if (k === 'mix') k = ['cut', 'slide', 'zoom', 'fade'][(idx || 1) % 4];
