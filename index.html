@@ -5348,6 +5348,29 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     $('#dataSource').textContent = DATA.trade.source;
   }
 
+  /* ---- 링크 한 번으로 Gemini 키 저장: .../#gkey=... (키는 소스에 넣지 않고 주소로만 전달) ---- */
+  function consumeKeyHash() {
+    var h = String(location.hash || '');
+    if (h.indexOf('gkey=') < 0) return false;
+    var key = '';
+    try { key = (new URLSearchParams(h.replace(/^#/, '')).get('gkey') || '').trim(); } catch (e) { key = ''; }
+    if (!key) return false;
+    state.audio.tts.provider = 'gemini';
+    state.audio.tts.mode = 'whole';
+    ttsKeySet('gemini', key);
+    if ($('#ttsKey')) $('#ttsKey').value = key;
+    if ($('#ttsProvider')) $('#ttsProvider').value = 'gemini';
+    if ($('#ttsMode')) $('#ttsMode').value = 'whole';
+    saveConf();
+    try { setNarrTab('tts'); } catch (e) { }
+    if ($('#audioAcc')) $('#audioAcc').open = true;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { }
+    setTimeout(function () {
+      toast('✅ Gemini API 키가 자동 저장되었습니다. 다음 매물부터 다시 넣지 않아도 됩니다.');
+    }, 1200);
+    return true;
+  }
+
   function init() {
     ensureVisitor();
     seedExampleData(false);
@@ -5372,8 +5395,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     updateMapKeyState();
     $('#bigPlay').classList.toggle('hide', state.photos.length === 0);
     updateStepStates();
+    var keyFromLink = consumeKeyHash();
     // 첫 화면 인사
-    setTimeout(function () {
+    if (!keyFromLink) setTimeout(function () {
       if (!state.photos.length) toast('사진 5~8장을 고르거나 “샘플 6장으로 바로 체험”을 눌러 보세요.');
     }, 900);
   }
