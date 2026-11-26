@@ -5178,10 +5178,10 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     } else {
       badge.textContent = 'OpenStreetMap · 키 불필요';
       badge.className = 'badge green';
-      $('#mapCallout').innerHTML = '<b>지도가 바로 뜹니다.</b> 기본 제공 카카오 키를 연결하는 중이고, 연결되지 않으면 ' +
-        '<b>OpenStreetMap 실제 지도</b>로 계속 동작합니다(키·가입 불필요).' +
+      $('#mapCallout').innerHTML = '<b>지도가 바로 뜹니다.</b> 기본 제공 카카오맵으로 열리고, 연결되지 않으면 ' +
+        '<b>OpenStreetMap 실제 지도</b>로 자동 대체됩니다(키·가입 불필요).' +
         '<div class="btn-row" style="margin-top:8px"><button class="btn small gold" id="goKeys" type="button">내 카카오 키 넣기</button>' +
-        '<span class="badge green" id="mapKeyBadge2">자동 대체 준비됨</span></div>';
+        '<span class="badge green" id="mapKeyBadge2">카카오맵 → OSM 자동 대체</span></div>';
     }
   }
   /* 기본 제공 카카오 JavaScript 키 (econature7-lab.github.io 도메인 제한 공개용).
