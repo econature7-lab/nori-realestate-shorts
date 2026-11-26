@@ -3444,9 +3444,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   }
 
   /* ---- 내레이션: 마이크 / 파일 / TTS ---- */
+  function decodeAb(c, ab) {
+    return new Promise(function (res, rej) {
+      var p = c.decodeAudioData(ab, res, function (e) { rej(e || new Error('오디오 해석 실패')); });
+      if (p && p.then) p.then(res).catch(rej);
+    });
+  }
   function bufFromBlob(blob) {
     var c = aCtx();
-    return blob.arrayBuffer().then(function (ab) { return c.decodeAudioData(ab); });
+    return blob.arrayBuffer().then(function (ab) { return decodeAb(c, ab); });
   }
   function setWholeNarration(buf, label) {
     NAR.mode = 'mic';
@@ -3565,7 +3571,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error('OpenAI ' + r.status + ' ' + t.slice(0, 90)); });
         return r.arrayBuffer();
-      }).then(function (ab) { return c.decodeAudioData(ab); });
+      }).then(function (ab) { return decodeAb(c, ab); });
     }
     if (provider === 'elevenlabs') {
       var vid = voice || '21m00Tcm4TlvDq8ikWAM';
@@ -3576,7 +3582,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error('ElevenLabs ' + r.status + ' ' + t.slice(0, 90)); });
         return r.arrayBuffer();
-      }).then(function (ab) { return c.decodeAudioData(ab); });
+      }).then(function (ab) { return decodeAb(c, ab); });
     }
     var vn = voice || 'Kore';
     return fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent', {
@@ -3742,12 +3748,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
   function pickMime() {
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return '';
-    var list = [
-      'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
-      'video/webm;codecs=vp9,opus',
-      'video/webm;codecs=vp8,opus',
-      'video/webm'
-    ];
+    var ua = navigator.userAgent || '';
+    var isChrome = /Chrome\/|Chromium\/|Edg\/|OPR\//i.test(ua);
+    var list = ['video/mp4;codecs="avc1.42E01E,mp4a.40.2"'];
+    /* Safari(아이폰)는 codecs 문자열 없이 video/mp4를 지원. 크롬에서 이 조합은 깨진 파일이 되어 제외한다 */
+    if (!isChrome) list.push('video/mp4');
+    list = list.concat(['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']);
     for (var i = 0; i < list.length; i++) if (MediaRecorder.isTypeSupported(list[i])) return list[i];
     return '';
   }
@@ -3854,7 +3860,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     if (!c) return Promise.resolve(null);
     var url = URL.createObjectURL(blob);
     return fetch(url).then(function (r) { return r.arrayBuffer(); })
-      .then(function (ab) { return c.decodeAudioData(ab); })
+      .then(function (ab) { return decodeAb(c, ab); })
       .then(function (buf) { URL.revokeObjectURL(url); return audioPeak(buf); })
       .catch(function () { try { URL.revokeObjectURL(url); } catch (e) { } return null; });
   }
