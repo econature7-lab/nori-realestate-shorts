@@ -837,15 +837,16 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
             <div class="narr-pane" id="narrPane-tts" hidden>
               <p>본인 API 키를 넣으면 장면 대본을 실제 음성으로 만들어 영상에 직접 섞습니다. <b>키는 이 브라우저에만 저장</b>되고 외부로 보내지 않습니다(해당 AI 서비스 호출에만 사용).</p>
+              <p class="small-note">OpenAI는 브라우저에서 직접 호출하는 것을 막아 두었습니다(CORS). OpenAI 키만 있다면 마이크 녹음이나 음성 파일을 쓰고, TTS를 쓰려면 Gemini 또는 ElevenLabs 키를 넣어 주세요.</p>
               <div class="tts-grid">
                 <div class="field"><label for="ttsProvider">서비스</label>
                   <select id="ttsProvider">
-                    <option value="openai">OpenAI TTS</option>
-                    <option value="elevenlabs">ElevenLabs</option>
-                    <option value="gemini">Google Gemini TTS</option>
+                    <option value="gemini">Google Gemini TTS (브라우저 지원)</option>
+                    <option value="elevenlabs">ElevenLabs (브라우저 지원)</option>
+                    <option value="openai">OpenAI TTS (브라우저 직접 호출 차단)</option>
                   </select>
                 </div>
-                <div class="field"><label for="ttsVoice">목소리</label><input type="text" id="ttsVoice" placeholder="예: alloy / Kore / voice id"></div>
+                <div class="field"><label for="ttsVoice">목소리</label><input type="text" id="ttsVoice" placeholder="Kore / Puck / voice id"></div>
               </div>
               <div class="field"><label for="ttsKey">API 키</label><input type="password" id="ttsKey" autocomplete="off" placeholder="sk-... / elevenlabs key / AIza..."></div>
               <div class="row">
@@ -1412,7 +1413,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     audio: {
       bgm: 'bright', bgmVol: 0.7, sfx: true, sfxVol: 0.6, duck: true,
       narr: { mode: 'none', label: '', seconds: 0, count: 0 },
-      tts: { provider: 'openai', voice: '' }
+      tts: { provider: 'gemini', voice: 'Kore' }
     },
     fields: { name: '', addr: '', price: '', deposit: '', monthly: '', area: '', floor: '', room: '', station: '', park: '', move: '', point: '' },
     scenes: [],
@@ -3632,8 +3633,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       toast('AI 음성 ' + valid.length + '장면을 영상에 넣을 준비를 했습니다.');
       prepareAudio(true).catch(function () { });
     }).catch(function (e) {
-      toast('음성 생성 실패: ' + (e && e.message ? e.message : ''), true);
-      $('#ttsNote').textContent = '실패: ' + (e && e.message ? e.message : '') + ' — 키·결제 상태를 확인하거나 마이크 녹음을 쓰세요.';
+      var m = (e && e.message) ? e.message : '';
+      if (/Failed to fetch|NetworkError/i.test(m) && provider === 'openai') m = 'OpenAI는 브라우저 직접 호출을 막습니다(CORS). Gemini·ElevenLabs 키를 쓰거나 마이크 녹음을 이용하세요.';
+      else if (/Failed to fetch|NetworkError/i.test(m)) m = '요청이 차단됐습니다(네트워크·CORS). 키와 연결을 확인해 주세요.';
+      else if (/401|403|API key not valid|400/.test(m)) m = '키가 올바르지 않거나 권한이 없습니다. ' + m.replace(/\s+/g, ' ').slice(0, 90);
+      toast('음성 생성 실패: ' + m, true);
+      $('#ttsNote').textContent = '실패: ' + m;
     }).then(function () {
       btn.disabled = false;
       btn.textContent = '🎧 장면별 음성 만들기';
@@ -3954,7 +3959,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     if ($('#sfxOn')) $('#sfxOn').checked = !!state.audio.sfx;
     if ($('#voiceSel')) $('#voiceSel').value = state.voice;
     $$('#speedChips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(Number(c.getAttribute('data-speed')) === state.speed)); });
-    if ($('#ttsProvider')) $('#ttsProvider').value = state.audio.tts.provider || 'openai';
+    if ($('#ttsProvider')) $('#ttsProvider').value = state.audio.tts.provider || 'gemini';
     if ($('#ttsVoice')) $('#ttsVoice').value = state.audio.tts.voice || '';
     if ($('#extraOn')) { $('#extraOn').checked = !!state.extras.on; $('#brandBadge').textContent = state.extras.on ? '표시 중' : '표시 안 함'; }
     $$('#accentSw .sw').forEach(function (s) { s.setAttribute('aria-pressed', String(!state.intro.accentAuto && s.getAttribute('data-color') === state.intro.accent)); });
